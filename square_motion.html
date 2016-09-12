@@ -103,8 +103,8 @@
 						var smallSquare = {};
 						smallSquare.mx = squareArray[i].mx;
 						smallSquare.my = squareArray[i].my;
-						smallSquare.height = (squareArray[i].h / 4) > 4 ? (squareArray[i].h / 4) : 4; //높이가 1/4로 의 높이를 가지지만, 4이하라면 4를 입력
-						smallSquare.width = (squareArray[i].w / 4) > 4 ? (squareArray[i].w / 4) : 4; //넓이가 1/4로 의 높이를 가지지만, 4이하라면 4를 입력
+						smallSquare.height = (squareArray[i].h / 2) > 4 ? (squareArray[i].h / 2) : 4; //높이가 1/4로 의 높이를 가지지만, 4이하라면 4를 입력
+						smallSquare.width = (squareArray[i].w / 2) > 4 ? (squareArray[i].w / 2) : 4; //넓이가 1/4로 의 높이를 가지지만, 4이하라면 4를 입력
 						smallSquare.courseX = (j % 2 == 0) ? squareArray[i].courseX : squareArray[i].courseX * -1; //서로 다른 방향들을 가지기 위해 변경
 						smallSquare.courseY = (j % 3 == 1) ? squareArray[i].courseY * -1 : squareArray[i].courseY; //서로 다른 방향들을 가지기 위해 변경
 						smallSquare.x = squareArray[i].x;
