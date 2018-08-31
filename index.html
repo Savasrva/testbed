@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<style type="text/css">
+#view-box{border: 2px solid black; position: relative;}
+#button-area{margin: 10px 0px 0px 120px;}
+.square{position:absolute; background-color: red;}
+</style>
+</head>
+<body>
+	<div id="view-box"></div>
+	<div id="button-area">
+		<button type="button" id="start">시작</button>
+		<button type="button" id="divide">분할</button>
+		<button type="button" id="pause_n_restart">중지/재시작</button>
+		<button type="button" id="delete">삭제</button>
+	</div>
+<script>
+ var Square = function(option){ //박스 함수
+	var option = option || {};
+	this.w = option.width || 40;
+	this.h = option.height || 40;
+	this.x = option.x || 0;
+	this.y = option.y || 0;
+	this.moveHorizontalSpeed(option.mx);
+	this.moveVerticalSpeed(option.my);
+	this.courseX = option.courseX || 1; // 1이면 우측 -1이면 좌측
+	this.courseY = option.courseY || 1; // 1이면 아래 -1이면 위
+ }
+ Square.prototype = {
+	moveHorizontalSpeed : function(mx){ //x축의 속도
+		if(mx > 10) mx = 10;
+		if(mx < 1) mx = 1;
+		this.mx = mx;
+	},
+	moveVerticalSpeed : function(my){ //y축의 속도
+		if(my > 10) my = 10;
+		if(my < 1) my = 1;
+		this.my = my;
+	},
+	nextPosition : function(){ //박스의 다음위치
+		return {
+			x : this.x + this.mx * this.courseX,
+			y : this.y + this.my * this.courseY
+		}
+	},
+	movePosition : function(){ //박스이동 저장
+		this.x = this.x + this.mx * this.courseX;
+		this.y = this.y + this.my * this.courseY;
+	},
+	turnaboutX : function(){ //x축의 위치변경
+		this.courseX = this.courseX * -1;
+	},
+	turnaboutY : function(){ //y축의 위치변경
+		this.courseY = this.courseY * -1;
+	}
+ }
+ var Motion = function(option){ //모션 함수
+	var option = option || {};
+	option.square = option.square || {};
+	option.motion = option.motion || {};
+	option.viewBox = option.viewBox || {id : "view-box"};
+	this.speed = option.motion.speed || 10;
+	this.limit = option.motion.limit || 64;
+	this.id = option.viewBox.id;
+	
+	var squareArray = [new Square(option.square)];
+	var wall = new Wall(option.viewBox);
+	
+	this.setSquareArray = function(array){
+		squareArray = array;
+	}
+	this.getSquareArray = function(){
+		return squareArray;
+	}
+	this.createSquare = function(){
+		var tag = "";
+		for(var i=0; i < squareArray.length; i++){
+			tag += '<div class="square" style="width:'+squareArray[i].w+'px; height:'+squareArray[i].h+'px; left: '+squareArray[i].x+'px; top: '+squareArray[i].y+'px;"></div>';
+			squareArray[i].movePosition();
+			wall.turnabout(squareArray[i]);
+		}
+		document.getElementById(option.viewBox.id).innerHTML = tag;
+	}
+ }
+ Motion.prototype = {
+	start : function(){ //시작
+		if(!this.sFlag){
+			this.timer = setInterval(this.createSquare, this.speed);
+			this.sFlag = 1;
+			this.flag = 1;
+		}
+	},
+	divide : function(){ //분할
+		if(this.sFlag == 1 && this.flag == 1){
+			var sCount = document.getElementsByClassName("square").length * 4; //분할될 박스의 갯수
+			if(sCount <= this.limit){ // 분할될 갯수보다 적거나 같을때만 분할 수행
+				var squareArray = this.getSquareArray();
+				var resultArray = [];
+				for(var i=0; i < squareArray.length; i++){
+					for(var j=1; j < 5; j++){
+						var smallSquare = {};
+						smallSquare.mx = squareArray[i].mx;
+						smallSquare.my = squareArray[i].my;
+						smallSquare.height = (squareArray[i].h / 2) > 4 ? (squareArray[i].h / 2) : 4; //높이가 1/4로 의 높이를 가지지만, 4이하라면 4를 입력
+						smallSquare.width = (squareArray[i].w / 2) > 4 ? (squareArray[i].w / 2) : 4; //넓이가 1/4로 의 높이를 가지지만, 4이하라면 4를 입력
+						smallSquare.courseX = (j % 2 == 0) ? squareArray[i].courseX : squareArray[i].courseX * -1; //서로 다른 방향들을 가지기 위해 변경
+						smallSquare.courseY = (j % 3 == 1) ? squareArray[i].courseY * -1 : squareArray[i].courseY; //서로 다른 방향들을 가지기 위해 변경
+						smallSquare.x = squareArray[i].x;
+						smallSquare.y = squareArray[i].y;
+						resultArray.push(new Square(smallSquare));
+					}
+				}
+				this.setSquareArray(resultArray);
+			}
+		}
+	},
+	pauseNrestart : function(){ // 일시정지와 재시작
+		if(this.flag < 2 && this.sFlag == 1){
+			clearInterval(this.timer);
+			this.flag = 2;
+		}else if(this.flag > 1 && this.sFlag == 1){
+			this.timer = setInterval(this.createSquare, this.speed);
+			this.flag = 1;
+		}
+	},
+	deleteAll : function(){ //삭제 후 변수에 저장된 옵션으로 초기화
+		clearInterval(this.timer);
+		document.getElementById(this.id).innerHTML = "";
+		motion = new Motion(option);
+	}
+	
+ }
+ var Wall = function(option){ //벽 함수
+	var option = option || {};
+	this.w = option.w || 500;
+	this.h = option.h || 500;
+	this.id = option.id || "view-box";
+	document.getElementById(this.id).style.width = this.w+"px";
+	document.getElementById(this.id).style.height = this.h+"px";
+ }
+ Wall.prototype = {
+	turnabout : function(square){ //박스의 이동방향 반전을 수행
+		var position = square.nextPosition();
+		if(position.x + square.w > this.w || position.x < 0){
+			square.turnaboutX();
+			return false;
+		}
+		if(position.y + square.h > this.h || position.y < 0){
+			square.turnaboutY();
+			return false;
+		}
+	}
+ }
+ var option = { //옵션의 변수
+	square : {//움직이는 박스에 사용될 값
+		width : 50,//움직이는 박스의 넓이
+		height : 50,//움직이는 박스의 높이
+		x : 10,//x축 좌표
+		y : 10,//y축 좌표
+		mx : 5,//x축으로의 mx값 만큼 px이동
+		my : 3//y축으로의 mx값 만큼 px이동
+	},
+	viewBox : {//표현할 영역에서 사용될 값
+		w : 400,//넓이
+		h : 400,//높이
+		id : "view-box"//id
+	},
+	motion : {//모션에서 사용할 값
+		speed : 20,//인터벌에 사용할 값
+		limit : 256//최대 갯수
+	}
+ };
+ var motion = new Motion(option);
+ document.getElementById("start").onclick = function(){motion.start();};
+ document.getElementById("divide").onclick = function(){motion.divide();};
+ document.getElementById("pause_n_restart").onclick = function(){motion.pauseNrestart();};
+ document.getElementById("delete").onclick = function(){motion.deleteAll();};
+</script>	
+</body>
+</html>
